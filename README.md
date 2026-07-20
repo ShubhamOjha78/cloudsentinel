@@ -1,13 +1,21 @@
 # 🛡️ CloudSentinel
-## Real-Time Anomaly Detection for Cloud Resource Monitoring Using Ensemble Machine Learning
 
-> **MCA (AI/ML) Project** | Chandigarh University | Academic Year 2025–2026
+### Real-Time Anomaly Detection for Cloud Resource Monitoring Using Ensemble Machine Learning
+
+> **MCA (AI/ML) Major Project** | Chandigarh University (CU Online) | 2025–2026
+
+![Python](https://img.shields.io/badge/Python-3.10+-blue)
+![Streamlit](https://img.shields.io/badge/Dashboard-Streamlit-red)
+![PostgreSQL](https://img.shields.io/badge/Database-PostgreSQL-336791)
+![License](https://img.shields.io/badge/License-MIT-green)
 
 ---
 
-## 📌 Project Overview
+## 📌 Overview
 
-CloudSentinel is an intelligent, real-time cloud infrastructure monitoring system that uses an ensemble of **Isolation Forest** and **LSTM Autoencoder** models to detect anomalies in CPU, memory, disk, and network metrics — replacing brittle static-threshold alerts with adaptive ML-driven detection.
+CloudSentinel is a real-time cloud infrastructure monitoring system that detects anomalies in CPU, memory, disk, and network metrics using a **weighted ensemble of Isolation Forest and LSTM Autoencoder** models — moving beyond brittle static-threshold alerts toward adaptive, ML-driven detection.
+
+The system collects system metrics, learns normal behavior patterns, and flags deviations across four severity tiers (LOW / MEDIUM / HIGH), surfaced through a live Streamlit dashboard.
 
 ---
 
@@ -23,7 +31,7 @@ cloudsentinel/
 │   ├── isolation_forest.py   # Isolation Forest detector
 │   ├── lstm_autoencoder.py   # LSTM Autoencoder detector
 │   ├── ensemble.py           # Weighted ensemble combiner
-│   └── saved/                # Trained model files (auto-created)
+│   └── saved/                # Trained model artifacts (gitignored)
 ├── alerting/
 │   └── alert_engine.py       # Email alert dispatch with cooldown
 ├── dashboard/
@@ -35,6 +43,7 @@ cloudsentinel/
 │   └── test_all.py           # Unit & integration tests
 ├── detection_loop.py         # Main real-time detection pipeline
 ├── train_all.py              # Model training script
+├── evaluate_on_csv.py        # Offline evaluation against ground truth
 ├── requirements.txt
 ├── config.env.example
 └── setup.sh
@@ -45,14 +54,13 @@ cloudsentinel/
 ## ⚙️ Installation
 
 ### Prerequisites
-- Ubuntu 22.04 LTS (or compatible Linux)
 - Python 3.10+
 - PostgreSQL 15+
-- AWS EC2 t2.medium (or equivalent)
+- Windows / Linux / macOS (developed and tested locally on Windows)
 
 ### Quick Setup
 ```bash
-git clone https://github.com/<your-username>/cloudsentinel.git
+git clone https://github.com/ShubhamOjha78/cloudsentinel.git
 cd cloudsentinel
 bash setup.sh
 ```
@@ -64,7 +72,7 @@ pip install -r requirements.txt
 
 # 2. Configure environment
 cp config.env.example config.env
-nano config.env   # Fill in DB credentials and SMTP details
+# Fill in your DB credentials and SMTP details in config.env
 
 # 3. Initialize database
 psql -U postgres -f database/schema.sql
@@ -74,28 +82,22 @@ psql -U postgres -f database/schema.sql
 
 ## 🚀 Usage
 
-### Step 1: Start Metric Collection
 ```bash
-python agents/collector.py --instance-id i-0abc1234 --interval 30
-```
+# 1. Start metric collection
+python agents/collector.py --instance-id local-01 --interval 30
 
-### Step 2: Train Models (after collecting ≥30 min of data)
-```bash
-python train_all.py --instance-id i-0abc1234 --days 30
-```
+# 2. Train models (after collecting some data)
+python train_all.py --instance-id local-01
 
-### Step 3: Start Detection Loop
-```bash
-python detection_loop.py --instance-id i-0abc1234 --interval 30
-```
+# 3. Start the real-time detection loop
+python detection_loop.py --instance-id local-01 --interval 30
 
-### Step 4: Launch Dashboard
-```bash
+# 4. Launch the dashboard
 streamlit run dashboard/app.py --server.port 8501
 # Open: http://localhost:8501
 ```
 
-### Run Tests
+Run tests:
 ```bash
 python -m pytest tests/ -v
 ```
@@ -106,54 +108,64 @@ python -m pytest tests/ -v
 
 | Component | Algorithm | Purpose |
 |-----------|-----------|---------|
-| Detector 1 | Isolation Forest (200 trees) | Structural/point anomaly detection |
-| Detector 2 | LSTM Autoencoder (128→64→64→128) | Temporal/sequence anomaly detection |
-| Ensemble | Weighted Average (IF=0.4, LSTM=0.6) | Combined robust decision |
+| Detector 1 | Isolation Forest | Structural / point anomaly detection |
+| Detector 2 | LSTM Autoencoder | Temporal / sequence anomaly detection |
+| Ensemble | Weighted Average (IF × 0.40 + LSTM × 0.60) | Combined robust decision |
 
-**Ensemble Score Formula:**
+**Ensemble Score Formula**
 ```
-ensemble_score = 0.4 × IF_score + 0.6 × LSTM_reconstruction_error
+ensemble_score = 0.40 × IF_score + 0.60 × LSTM_reconstruction_error
 ```
 
-**Severity Thresholds:**
-| Severity | Score Range |
-|----------|-------------|
-| NORMAL   | < 0.65      |
-| LOW      | 0.65 – 0.75 |
-| MEDIUM   | 0.75 – 0.88 |
-| HIGH     | ≥ 0.88      |
+**Key constants:** `WINDOW_SIZE = 60`, `TRAIN_RATIO = 0.60`, anomaly threshold = `0.65`
+
+**Features monitored:** `cpu_percent`, `mem_percent`, `disk_read_mb`, `disk_write_mb`, `net_recv_kb`, `net_sent_kb`
 
 ---
 
-## 📊 Performance Results (NAB Benchmark)
+## 📊 Evaluation Results
+
+Evaluated on `cloud_metrics.csv` (855 rows, 342 test samples, Z-score-derived ground truth):
 
 | Model | Precision | Recall | F1-Score | FPR |
 |-------|-----------|--------|----------|-----|
-| Z-Score Baseline | 72.3% | 68.5% | 70.3% | 18.2% |
-| Isolation Forest | 83.7% | 79.4% | 81.5% | 11.4% |
-| LSTM Autoencoder | 87.2% | 84.6% | 85.9% | 8.9% |
-| **CloudSentinel Ensemble** | **91.4%** | **88.7%** | **90.0%** | **5.3%** |
+| Z-Score Baseline | 100.00% | 19.44% | 32.56% | 0.00% |
+| Isolation Forest | 35.56% | 88.89% | 50.79% | 23.48% |
+| LSTM Autoencoder | 35.00% | 58.33% | 43.75% | 15.79% |
+| **CloudSentinel Ensemble** | **39.62%** | **58.33%** | **47.19%** | **12.96%** |
+
+**Why the ensemble, despite a slightly lower F1 than standalone Isolation Forest?**
+The ensemble achieves the **lowest false positive rate (12.96%)** among all trained models — nearly half of Isolation Forest's 23.48%. In a production monitoring system, false alerts are costly (alert fatigue), making the ensemble the more practical choice even at a modest precision/recall trade-off.
+
+> **Note:** This was developed and evaluated locally; AWS EC2 deployment is a planned future extension, not yet implemented.
 
 ---
 
 ## 🔒 Security
 
-- Credentials stored in `.env` (never hardcoded)
-- `.env` and `config.env` added to `.gitignore`
-- PostgreSQL SSL mode enabled
-- API key authentication for metric ingestion
+- Credentials stored in `config.env` (never hardcoded), excluded via `.gitignore`
+- Trained model artifacts (`.pkl`, `.h5`) excluded from version control
+- PostgreSQL used for structured metric and alert storage
 
 ---
 
 ## 📚 Technologies Used
 
-Python 3.10 · scikit-learn · TensorFlow/Keras · pandas · NumPy · PostgreSQL · psycopg2 · Streamlit · Plotly · psutil · AWS EC2 · Git
+Python · scikit-learn · TensorFlow/Keras · pandas · NumPy · PostgreSQL · psycopg2 · Streamlit · psutil · Git
+
+---
+
+## 🔭 Future Work
+
+- Deploy on AWS EC2 for live cloud-instance monitoring
+- Expand alerting channels (Slack/SMS)
+- Hyperparameter tuning for ensemble weights
 
 ---
 
 ## 👤 Author
 
-**[Your Name]** | Enrollment: [Your Enrollment No.]  
-MCA (Artificial Intelligence & Machine Learning)  
-Chandigarh University | CU Online  
-Academic Year: 2025–2026
+**Shubham** | Enrollment No. O24MCA111851
+MCA (Artificial Intelligence & Machine Learning)
+Chandigarh University | CU Online
+Mentor: Vasanthi Chandran
