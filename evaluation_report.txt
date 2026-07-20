@@ -1,0 +1,13 @@
+CloudSentinel — Model Evaluation Report
+MCA (AI/ML) | Chandigarh University
+Dataset : cloud_metrics.csv
+Mode    : zscore
+Rows    : 855 | Train: 513 | Test: 342
+Anomalies in test: 36 (12.7%)
+
+Model                                     Precision   Recall       F1      FPR
+------------------------------------------------------------------------
+Z-Score Baseline                            100.00%   19.44%   32.56%    0.00%
+Isolation Forest                             35.56%   88.89%   50.79%   23.48%
+LSTM Autoencoder                             35.00%   58.33%   43.75%   15.79%
+CloudSentinel Ensemble (IF x0.4 + LSTM x0.6)     39.62%   58.33%   47.19%   12.96%

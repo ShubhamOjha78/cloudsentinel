@@ -1,0 +1,21 @@
+# Environment & credentials
+config.env
+*.env
+.env
+
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+venv/
+.venv/
+*.egg-info/
+
+# Saved models
+models/saved/*.pkl
+models/saved/*.h5
+models/saved/*.joblib
+
+# Misc
+.DS_Store
+*.log

@@ -1,0 +1,14 @@
+Project ko Start karne ke liye
+--- Step 1 ------
+D:
+cd cloudsentinel
+python agents\collector.py --instance-id my-windows-pc --interval 30
+
+----- Step 2 ------- Next Terminal Me --------
+streamlit run dashboard\app.py
+
+--------Step 3 --------- Next Terminal me ----------
+python detection_loop.py --instance-id my-windows-pc --interval 30
+
+
+
