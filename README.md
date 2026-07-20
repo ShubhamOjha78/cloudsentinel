@@ -2,7 +2,7 @@
 
 ### Real-Time Anomaly Detection for Cloud Resource Monitoring Using Ensemble Machine Learning
 
-> **MCA (AI/ML) Major Project** | Chandigarh University (CU Online) | 2025–2026
+> **MCA (AI/ML) Major Project** | 2025–2026
 
 ![Python](https://img.shields.io/badge/Python-3.10+-blue)
 ![Streamlit](https://img.shields.io/badge/Dashboard-Streamlit-red)
@@ -167,5 +167,3 @@ Python · scikit-learn · TensorFlow/Keras · pandas · NumPy · PostgreSQL · p
 
 **Shubham** | Enrollment No. O24MCA111851
 MCA (Artificial Intelligence & Machine Learning)
-Chandigarh University | CU Online
-Mentor: Vasanthi Chandran
